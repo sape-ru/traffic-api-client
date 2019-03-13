@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="http://schema.phpunit.de/5.7/phpunit.xsd"
+         backupGlobals="false"
+         colors="true"
+         bootstrap="tests/bootstrap.php"
+         beStrictAboutTestsThatDoNotTestAnything="true"
+>
+    <php>
+        <ini name="error_reporting" value="-1"/>
+    </php>
+
+    <groups>
+        <exclude>
+            <group>broken</group>
+            <group>experiment</group>
+        </exclude>
+    </groups>
+</phpunit>

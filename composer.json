@@ -1,0 +1,32 @@
+{
+  "name": "sape/traffic-api-client",
+  "description": "Sape.Traffic API Client PHP",
+  "keywords": ["sape", "traffic.sape", "api"],
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Sergey Boborykin",
+      "email": "s.boborykin@sape.ru"
+    }
+  ],
+  "require": {
+    "php": ">=5.5",
+    "ext-json": "*",
+    "guzzlehttp/guzzle": "^6.3",
+    "psr/log": "^1.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^4.8",
+    "monolog/monolog": "^1.11"
+  },
+  "scripts": {
+    "test": "bash ./run-tests.sh"
+  },
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {
+      "SapeRt\\Api\\": "src/"
+    }
+  }
+}
