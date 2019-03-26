@@ -182,15 +182,20 @@ class User extends Base
     }
 
     /**
-     * @param $id_or_url
+     * @param int|string $id_or_url
+     * @param bool|null  $check_final_url
      *
      * @return array
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.checkUrlAvailability
      */
-    public function ads_checkUrlAvailability($id_or_url)
+    public function ads_checkUrlAvailability($id_or_url, $check_final_url = null)
     {
         $params = [];
+
+        if (isset($check_final_url)) {
+            $params['check_final_url'] = $check_final_url;
+        }
 
         if (is_numeric($id_or_url)) {
             $params['id'] = $id_or_url;
