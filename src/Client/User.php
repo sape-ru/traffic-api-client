@@ -713,6 +713,72 @@ class User extends Base
         return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
     }
 
+    /* Теги креативов */
+
+    /**
+     * @param $name
+     *
+     * @return array
+     * @throws Exception
+     * @link https://traffic.sape.ru/doc/api#action-tags.add
+     */
+    public function tags_add($name)
+    {
+        $data['name'] = $name;
+
+        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+    }
+
+    /**
+     * @param      $id
+     * @param      $name
+     *
+     * @return array
+     * @throws Exception
+     * @link https://traffic.sape.ru/doc/api#action-tags.edit
+     */
+    public function tags_edit($id, $name)
+    {
+        $params       = ['id' => $id];
+        $data['name'] = $name;
+
+        return $this->request('POST', str_replace('_', '/', __FUNCTION__), $params, $data);
+    }
+
+    /**
+     * @param array $filter
+     * @param Page  $page
+     *
+     * @return mixed
+     * @throws Exception
+     * @link https://traffic.sape.ru/doc/api#action-tags.list
+     */
+    public function tags_list(array $filter = array(), $page = null)
+    {
+        $params = [];
+        if ($page) {
+            $params = array_merge($params, $page->toArray());
+        }
+
+        if ($filter) {
+            $params['filter'] = $filter;
+        }
+
+        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+    }
+
+    /**
+     * @param $id
+     *
+     * @return array
+     * @throws Exception
+     * @link https://traffic.sape.ru/doc/api#action-tags.delete
+     */
+    public function tags_delete($id)
+    {
+        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+    }
+
     /* Статистика */
 
     /**
