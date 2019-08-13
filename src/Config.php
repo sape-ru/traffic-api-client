@@ -29,16 +29,37 @@ class Config implements ArrayAccess
     protected $_configurators = [];
 
     /** @var bool */
-    protected $_is_dev = false;
+    protected $_let_debug = false;
 
     /** @var bool */
     protected $_xdebug_ide_key = false;
 
     public function getBaseUrl()
     {
-        return $this->_is_dev
-            ? $this->getDevHost()
-            : $this->_host;
+        $url =  '';
+        if(!$this->_let_debug){
+            $url = $this->_host;
+        }
+        if($this->_let_debug){
+
+            $path_parts = explode(DIRECTORY_SEPARATOR, __FILE__);
+            if ($path_parts[3] !== 'sape_ru') {
+                $name = $path_parts[3];
+            }
+
+            if (empty($name)) {
+                throw new RuntimeException('Cannot detect debug server name');
+            }
+
+            $debugPrefix = $name . '-dev-';
+
+            $mainHost = parse_url($this->_host, PHP_URL_HOST);
+            $debugHost  = $debugPrefix . $mainHost;
+
+            $url = str_replace($mainHost, $debugHost, $this->_host);
+        }
+
+        return $url;
     }
 
     protected static function snakeCaseToCamelCase($name)
@@ -100,36 +121,9 @@ class Config implements ArrayAccess
         return $this;
     }
 
-    public static function getDevName()
+    public function letDebug(bool $deb): self
     {
-        $path_parts = explode(DIRECTORY_SEPARATOR, __FILE__);
-        if ($path_parts[3] === 'sape_ru') {
-            return '';
-        }
-
-        return $path_parts[3];
-    }
-
-    protected function getDevHost($devPrefix = '-dev-')
-    {
-        $devName = self::getDevName();
-        if (empty($devName)) {
-            throw new RuntimeException('Cannot detect dev user name');
-        }
-
-        $devNamePrefix = $devName . $devPrefix;
-
-        $prodHost = parse_url($this->_host, PHP_URL_HOST);
-        $devHost  = $devNamePrefix . $prodHost;
-
-        $r = str_replace($prodHost, $devHost, $this->_host);
-
-        return $r;
-    }
-
-    public function setDevelopment(bool $dev): self
-    {
-        $this->_is_dev = $dev;
+        $this->_let_debug = $deb;
 
         return $this;
     }

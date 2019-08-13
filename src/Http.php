@@ -22,7 +22,7 @@ class Http extends Client
     /**
      * @return CookieJar
      */
-    public function getCookieJar()
+    public function getCookieJar(): CookieJar
     {
         return $this->getConfig(self::COOKIES);
     }
