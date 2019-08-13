@@ -3,8 +3,8 @@
 namespace SapeRt\Api\Client;
 
 use SapeRt\Api\Config;
-use SapeRt\Api\Param\Page;
 use SapeRt\Api\Exception\Exception;
+use SapeRt\Api\Param\Page;
 
 /**
  * Class User
@@ -18,7 +18,7 @@ class User extends Base
     public function __construct($config = null)
     {
         if (!$config) {
-            $config = new Config('user');
+            $config = new Config('/api/user');
         }
 
         parent::__construct($config);
@@ -38,14 +38,17 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-support.addfeedback
      */
-    public function support_addfeedback($type, $title, $body, array $filenames = array())
+    public function support_addfeedback($type, $title, $body,
+                                        array $filenames = array())
     {
         $files = [];
         foreach ($filenames as $filename) {
             $files['file[]'][] = $filename;
         }
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['type' => $type], ['title' => $title, 'body' => $body], $files, true);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['type' => $type],
+            ['title' => $title, 'body' => $body], $files, true);
     }
 
     /* Разделы */
@@ -57,14 +60,15 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-sections.list
      */
-    public function sections_list($page = null)
+    public function sections_list($page = null): array
     {
         $params = [];
         if ($page) {
             $params = array_merge($params, $page->toArray());
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -74,9 +78,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-sections.add
      */
-    public function sections_add($data)
+    public function sections_add($data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [], $data);
     }
 
     /**
@@ -86,9 +91,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-sections.get
      */
-    public function sections_get($id)
+    public function sections_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -99,9 +105,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-sections.edit
      */
-    public function sections_edit($id, $data)
+    public function sections_edit($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -111,9 +118,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-sections.delete
      */
-    public function sections_delete($id)
+    public function sections_delete($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /* Объявления */
@@ -126,9 +134,11 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.addbunch
      */
-    public function ads_addbunch($campaign_id, $data)
+    public function ads_addbunch($campaign_id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['campaign_id' => $campaign_id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__),
+            ['campaign_id' => $campaign_id], $data);
     }
 
     /**
@@ -139,9 +149,11 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.add
      */
-    public function ads_add($campaign_id, $data)
+    public function ads_add($campaign_id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['campaign_id' => $campaign_id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__),
+            ['campaign_id' => $campaign_id], $data);
     }
 
     /**
@@ -152,9 +164,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.edit
      */
-    public function ads_edit($id, $data)
+    public function ads_edit($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -164,9 +177,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.get
      */
-    public function ads_get($id)
+    public function ads_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -176,9 +190,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.erase
      */
-    public function ads_erase($id)
+    public function ads_erase($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -189,7 +204,8 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.checkUrlAvailability
      */
-    public function ads_checkUrlAvailability($id_or_url, $check_final_url = null)
+    public function ads_checkUrlAvailability($id_or_url,
+                                             $check_final_url = null): array
     {
         $params = [];
 
@@ -203,7 +219,8 @@ class User extends Base
             $params['url'] = $id_or_url;
         }
 
-        return $this->request('POST', $this->getMethodName(__FUNCTION__), $params);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -216,7 +233,8 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.list
      */
-    public function ads_list($campaign_id = null, $filter = array(), $page = null, array $params = array())
+    public function ads_list($campaign_id = null, $filter = array(),
+                             $page = null, array $params = array()): array
     {
         if ($campaign_id) {
             $params['campaign_id'] = $campaign_id;
@@ -230,7 +248,8 @@ class User extends Base
             $params = array_merge($params, $page->toArray());
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -240,9 +259,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.start
      */
-    public function ads_start($id)
+    public function ads_start($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -252,9 +272,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-ads.stop
      */
-    public function ads_stop($id)
+    public function ads_stop($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /* Правила показа объявлений */
@@ -267,9 +288,11 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-adrules.addbunch
      */
-    public function adrules_addbunch($campaign_id, $data)
+    public function adrules_addbunch($campaign_id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['campaign_id' => $campaign_id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__),
+            ['campaign_id' => $campaign_id], $data);
     }
 
     /**
@@ -280,9 +303,11 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-adrules.add
      */
-    public function adrules_add($campaign_id, $data)
+    public function adrules_add($campaign_id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['campaign_id' => $campaign_id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__),
+            ['campaign_id' => $campaign_id], $data);
     }
 
     /**
@@ -293,9 +318,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-adrules.edit
      */
-    public function adrules_edit($id, $data)
+    public function adrules_edit($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -305,9 +331,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-adrules.get
      */
-    public function adrules_get($id)
+    public function adrules_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -318,9 +345,11 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-adrules.linkads
      */
-    public function adrules_linkads($campaign_id, $data)
+    public function adrules_linkads($campaign_id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['campaign_id' => $campaign_id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__),
+            ['campaign_id' => $campaign_id], $data);
     }
 
     /**
@@ -332,7 +361,8 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-adrules.list
      */
-    public function adrules_list($campaign_id, $type = null, $page = null)
+    public function adrules_list($campaign_id, $type = null,
+                                 $page = null): array
     {
         $params = ['campaign_id' => $campaign_id];
         if ($type) {
@@ -342,7 +372,8 @@ class User extends Base
             $params = array_merge($params, $page->toArray());
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -352,9 +383,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-adrules.delete
      */
-    public function adrules_delete($id)
+    public function adrules_delete($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /* Кампании */
@@ -368,7 +400,8 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-campaigns.add
      */
-    public function campaigns_add($data, $preset_id = null, $is_draft = false)
+    public function campaigns_add($data, $preset_id = null,
+                                  $is_draft = false): array
     {
         $params = [];
         if ($preset_id) {
@@ -379,7 +412,8 @@ class User extends Base
             $params['is_draft'] = $is_draft;
         }
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), $params, $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), $params, $data);
     }
 
     /**
@@ -391,7 +425,7 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-campaigns.edit
      */
-    public function campaigns_edit($id, $data, $is_draft = false)
+    public function campaigns_edit($id, $data, $is_draft = false): array
     {
         $params = ['id' => $id];
 
@@ -399,7 +433,8 @@ class User extends Base
             $params['is_draft'] = $is_draft;
         }
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), $params, $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), $params, $data);
     }
 
     /**
@@ -410,14 +445,15 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-campaigns.get
      */
-    public function campaigns_get($id, $json_type = null)
+    public function campaigns_get($id, $json_type = null): array
     {
         $params['id'] = $id;
         if ($json_type) {
             $params['json_type'] = $json_type;
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -439,7 +475,8 @@ class User extends Base
             $params['filter'] = $filter;
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -450,7 +487,7 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-campaigns.start
      */
-    public function campaigns_start($id, $no_ads = false)
+    public function campaigns_start($id, $no_ads = false): array
     {
         $params = ['id' => $id];
 
@@ -458,7 +495,8 @@ class User extends Base
             $params['no_ads'] = 1;
         }
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -468,9 +506,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-campaigns.stop
      */
-    public function campaigns_stop($id)
+    public function campaigns_stop($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -480,9 +519,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-campaigns.archive
      */
-    public function campaigns_archive($id)
+    public function campaigns_archive($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -492,9 +532,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-campaigns.erase
      */
-    public function campaigns_erase($id)
+    public function campaigns_erase($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -505,9 +546,11 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-campaigns.clone
      */
-    public function campaigns_clone($id, $with_ads = false)
+    public function campaigns_clone($id, $with_ads = false): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id, 'ads' => (int) $with_ads]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__),
+            ['id' => $id, 'ads' => (int)$with_ads]);
     }
 
     /* Белые списки */
@@ -519,14 +562,15 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-listdomains.list
      */
-    public function listdomains_list($page = null)
+    public function listdomains_list($page = null): array
     {
         $params = [];
         if ($page) {
             $params = array_merge($params, $page->toArray());
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -536,9 +580,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-listdomains.add
      */
-    public function listdomains_add($data)
+    public function listdomains_add($data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [], $data);
     }
 
     /**
@@ -549,9 +594,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-listdomains.edit
      */
-    public function listdomains_edit($id, $data)
+    public function listdomains_edit($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -561,9 +607,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-listdomains.get
      */
-    public function listdomains_get($id)
+    public function listdomains_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -573,9 +620,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-listdomains.delete
      */
-    public function listdomains_delete($id)
+    public function listdomains_delete($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /* Креативы */
@@ -588,13 +636,15 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-creatives.add
      */
-    public function creatives_add($filename, $type = null)
+    public function creatives_add($filename, $type = null): array
     {
         if (!file_exists($filename)) {
             throw new Exception("File not exists: $filename");
         }
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['type' => $type], [], ['file[]' => $filename]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__),
+            ['type' => $type], [], ['file[]' => $filename]);
     }
 
     /**
@@ -604,11 +654,12 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-creatives.delete
      */
-    public function creatives_delete($ids)
+    public function creatives_delete($ids): array
     {
         $data = ['creative_ids' => (array) $ids];
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [], $data);
     }
 
     /**
@@ -618,11 +669,12 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-creatives.erase
      */
-    public function creatives_erase($ids)
+    public function creatives_erase($ids): array
     {
         $data = ['creative_ids' => (array) $ids];
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [], $data);
     }
 
     /**
@@ -648,7 +700,8 @@ class User extends Base
      */
     public function creatives_crop($id, $crops)
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $crops);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $crops);
     }
 
     /**
@@ -658,9 +711,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-creatives.get
      */
-    public function creatives_get($id)
+    public function creatives_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -674,11 +728,13 @@ class User extends Base
      */
     public function adtemplates_get($id)
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
-     * Получить список шаблонов подходящих для данного креатива вместе с существующими кропами
+     * Получить список шаблонов подходящих для данного креатива вместе
+     * с существующими кропами
      *
      * @param int $creative_id ID креатива
      *
@@ -688,7 +744,9 @@ class User extends Base
      */
     public function adtemplates_listbycreative($creative_id)
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['creative_id' => $creative_id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__),
+            ['creative_id' => $creative_id]);
     }
 
     /**
@@ -703,14 +761,15 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-creatives.list
      */
-    public function creatives_list($filter, $page = null)
+    public function creatives_list($filter, $page = null): array
     {
         $params = ['filter' => $filter];
         if ($page) {
             $params = array_merge($params, $page->toArray());
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /* Теги креативов */
@@ -722,11 +781,12 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-tags.add
      */
-    public function tags_add($name)
+    public function tags_add($name): array
     {
         $data['name'] = $name;
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [], $data);
     }
 
     /**
@@ -737,12 +797,13 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-tags.edit
      */
-    public function tags_edit($id, $name)
+    public function tags_edit($id, $name): array
     {
         $params       = ['id' => $id];
         $data['name'] = $name;
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), $params, $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), $params, $data);
     }
 
     /**
@@ -764,7 +825,8 @@ class User extends Base
             $params['filter'] = $filter;
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -774,9 +836,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-tags.delete
      */
-    public function tags_delete($id)
+    public function tags_delete($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /* Статистика */
@@ -789,14 +852,16 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-statistics.total
      */
-    public function statistics_total($data_view_from, $data_view_to)
+    public function statistics_total($data_view_from,
+                                     $data_view_to): array
     {
         $filter = [
             'data_view_from' => $data_view_from,
             'data_view_to'   => $data_view_to,
         ];
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $filter);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $filter);
     }
 
     /**
@@ -808,7 +873,8 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-statistics.ads
      */
-    public function statistics_ads($data_view_from, $data_view_to, array $ids = array())
+    public function statistics_ads($data_view_from, $data_view_to,
+                                   array $ids = array()): array
     {
         $filter = [
             'data_view_from' => $data_view_from,
@@ -819,7 +885,8 @@ class User extends Base
             $filter['ids'] = implode(',', $ids);
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $filter);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $filter);
     }
 
     /**
@@ -831,7 +898,8 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-statistics.campaigns
      */
-    public function statistics_campaigns($data_view_from, $data_view_to, array $ids = array())
+    public function statistics_campaigns($data_view_from, $data_view_to,
+                                         array $ids = array()): array
     {
         $filter = [
             'data_view_from' => $data_view_from,
@@ -842,7 +910,8 @@ class User extends Base
             $filter['ids'] = implode(',', $ids);
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $filter);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $filter);
     }
 
     /**
@@ -855,7 +924,8 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-statistics.bidding
      */
-    public function statistics_bidding($campaign_id, $date_view_from, $date_view_to, $max_data_points)
+    public function statistics_bidding($campaign_id, $date_view_from,
+                                       $date_view_to, $max_data_points): array
     {
         $filter = [
             'campaign_id'     => $campaign_id,
@@ -864,7 +934,8 @@ class User extends Base
             'max_data_points' => $max_data_points,
         ];
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $filter);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $filter);
     }
 
 
@@ -878,7 +949,7 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-segments.list
      */
-    public function segments_list($filter = [], $page = null)
+    public function segments_list($filter = [], $page = null): array
     {
         $params = [];
 
@@ -888,7 +959,8 @@ class User extends Base
 
         $params['filter'] = $filter;
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -899,14 +971,16 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-segments.add
      */
-    public function segments_add($data, $filename = null)
+    public function segments_add($data, $filename = null): array
     {
         $files = [];
         if ($filename) {
             $files['file'] = $filename;
         }
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data, $files, true);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [],
+            $data, $files, true);
     }
 
     /**
@@ -916,9 +990,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-segments.get
      */
-    public function segments_get($id)
+    public function segments_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -930,7 +1005,7 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-segments.edit
      */
-    public function segments_edit($id, $data, $filename = null)
+    public function segments_edit($id, $data, $filename = null): array
     {
         $files = [];
         if ($filename) {
@@ -939,7 +1014,9 @@ class User extends Base
 
         $data['online'] = true;
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data, $files, true);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__),
+            ['id' => $id], $data, $files, true);
     }
 
     /**
@@ -949,9 +1026,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-segments.delete
      */
-    public function segments_delete($id)
+    public function segments_delete($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /* Пиксели */
@@ -963,14 +1041,15 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-pixels.list
      */
-    public function pixels_list($page = null)
+    public function pixels_list($page = null): array
     {
         $params = [];
         if ($page) {
             $params = array_merge($params, $page->toArray());
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -980,9 +1059,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-pixels.add
      */
-    public function pixels_add($data)
+    public function pixels_add($data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [], $data);
     }
 
     /**
@@ -992,9 +1072,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-pixels.get
      */
-    public function pixels_get($id)
+    public function pixels_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -1005,9 +1086,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-pixels.edit
      */
-    public function pixels_edit($id, $data)
+    public function pixels_edit($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -1017,9 +1099,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-pixels.delete
      */
-    public function pixels_delete($id)
+    public function pixels_delete($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /* Маркетплейс */
@@ -1032,14 +1115,15 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.list
      */
-    public function market_list(array $filter = [], $page = null)
+    public function market_list(array $filter = [], $page = null): array
     {
         $params = ['filter' => $filter];
         if ($page) {
             $params = array_merge($params, $page->toArray());
         }
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -1049,9 +1133,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.cancel
      */
-    public function market_cancel($id)
+    public function market_cancel($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -1061,9 +1146,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.approve
      */
-    public function market_approve($id)
+    public function market_approve($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -1073,9 +1159,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.add
      */
-    public function market_add($data)
+    public function market_add($data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [], $data);
     }
 
     /**
@@ -1086,9 +1173,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.edit
      */
-    public function market_edit($id, $data)
+    public function market_edit($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -1098,9 +1186,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.get
      */
-    public function market_get($id)
+    public function market_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -1108,9 +1197,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.providers
      */
-    public function market_providers()
+    public function market_getMarketProviders(): array
     {
-        return $this->request('GET', 'market/get-market-providers', []);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__));
     }
 
     /**
@@ -1121,7 +1211,8 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.groups
      */
-    public function market_groups($names_only = false, $provider_id = null)
+    public function market_getMarketGroups($names_only = false,
+                                           $provider_id = null): array
     {
         $params = [
             'names-only' => $names_only
@@ -1131,7 +1222,8 @@ class User extends Base
             $params['provider_id'] = $provider_id;
         }
 
-        return $this->request('GET', 'market/get-market-groups', $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -1144,7 +1236,9 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.attrs
      */
-    public function market_attrs($names_only = false, $group_id = null, $type_name = null, $provider_id = null)
+    public function market_getMarketAttrs(
+        $names_only = false, $group_id = null,
+        $type_name = null, $provider_id = null): array
     {
         $params = [
             'names-only' => $names_only
@@ -1162,7 +1256,8 @@ class User extends Base
             $params['type_name'] = $type_name;
         }
 
-        return $this->request('GET', 'market/get-market-attrs', $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
@@ -1174,7 +1269,9 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-market.types
      */
-    public function market_types($names_only = false, $is_enum = null, $provider_id = null)
+    public function market_getMarketTypes(
+        $names_only = false, $is_enum = null,
+        $provider_id = null): array
     {
         $params = [
             'names-only' => $names_only,
@@ -1188,7 +1285,8 @@ class User extends Base
             $params['is_enum'] = $is_enum;
         }
 
-        return $this->request('GET', 'market/get-market-types', $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /* Сертификаты */
@@ -1201,9 +1299,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-certificates.bind
      */
-    public function certificates_bind($id, $data)
+    public function certificates_bind($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -1213,9 +1312,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-certificates.list
      */
-    public function certificates_list($data)
+    public function certificates_list($data): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $data);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $data);
     }
 
     /**
@@ -1225,9 +1325,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-certificates.get
      */
-    public function certificates_get($id)
+    public function certificates_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -1235,9 +1336,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-certificates.relations
      */
-    public function certificates_relations()
+    public function certificates_relations(): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__));
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__));
     }
 
     /**
@@ -1248,9 +1350,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-certificates.unbind
      */
-    public function certificates_unbind($id, $data)
+    public function certificates_unbind($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -1260,9 +1363,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-certificates.delete
      */
-    public function certificates_delete($id)
+    public function certificates_delete($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -1273,7 +1377,7 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-certificates.add
      */
-    public function certificates_add($data, $filename)
+    public function certificates_add($data, $filename): array
     {
         if (!file_exists($filename)) {
             throw new Exception("File not exists: $filename");
@@ -1281,7 +1385,9 @@ class User extends Base
 
         $files = ['certificate' => $filename];
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data, $files, true);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [],
+            $data, $files, true);
     }
 
     /**
@@ -1293,14 +1399,16 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-certificates.edit
      */
-    public function certificates_edit($id, $data, $filename)
+    public function certificates_edit($id, $data, $filename): array
     {
         $files = [];
         if (file_exists($filename)) {
             $files = ['certificate' => $filename];
         }
 
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data, $files, true);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id],
+            $data, $files, true);
     }
 
     /* Клиенты */
@@ -1312,9 +1420,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-clients.add
      */
-    public function clients_add($data)
+    public function clients_add($data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), [], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), [], $data);
     }
 
     /**
@@ -1325,9 +1434,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-clients.edit
      */
-    public function clients_edit($id, $data)
+    public function clients_edit($id, $data): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id], $data);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id], $data);
     }
 
     /**
@@ -1337,9 +1447,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-clients.list
      */
-    public function clients_list($filter = [])
+    public function clients_list($filter = []): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $filter);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $filter);
     }
 
     /**
@@ -1349,9 +1460,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-clients.get
      */
-    public function clients_get($id)
+    public function clients_get($id): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -1361,9 +1473,10 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-clients.delete
      */
-    public function clients_delete($id)
+    public function clients_delete($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 
     /**
@@ -1373,8 +1486,9 @@ class User extends Base
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-clients.generatetoken
      */
-    public function clients_generatetoken($id)
+    public function clients_generatetoken($id): array
     {
-        return $this->request('POST', str_replace('_', '/', __FUNCTION__), ['id' => $id]);
+        return $this->request(self::POST,
+            self::toEndPoint(__FUNCTION__), ['id' => $id]);
     }
 }

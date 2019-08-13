@@ -8,10 +8,14 @@
     {
       "name": "Sergey Boborykin",
       "email": "s.boborykin@sape.ru"
+    },
+    {
+      "name": "Volkhin Nikolay",
+      "email": "nikolay.volkhin@rydlab.ru"
     }
   ],
   "require": {
-    "php": ">=5.5",
+    "php": ">=7.0",
     "ext-json": "*",
     "guzzlehttp/guzzle": "^6.3",
     "psr/log": "^1.0"

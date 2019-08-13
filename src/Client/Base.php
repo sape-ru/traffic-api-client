@@ -2,26 +2,40 @@
 
 namespace SapeRt\Api\Client;
 
-use GuzzleHttp\Psr7\LazyOpenStream;
-use Psr\Http\Message\ResponseInterface;
-
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException as GuzzleRequestException;
-
+use GuzzleHttp\Psr7\LazyOpenStream;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use SapeRt\Api\Config;
-use SapeRt\Api\Http;
-
-use SapeRt\Api\Exception\Exception;
 use SapeRt\Api\Exception\AppException;
 use SapeRt\Api\Exception\ConfigException;
+use SapeRt\Api\Exception\Exception;
 use SapeRt\Api\Exception\RequestException;
 use SapeRt\Api\Exception\ResponseException;
+use SapeRt\Api\Http;
 
 abstract class Base implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
+
+    const GET    = 'GET';
+    const POST   = 'POST';
+    const PUT    = 'PUT';
+    const DELETE = 'DELETE';
+
+    const ONLINE      = 'online';
+    const JSON_TYPE   = 'json_type';
+    const FORM_ERRORS = 'form_errors';
+    const MESSAGE     = 'message';
+    const IS_SUCCESS  = 'is_success';
+    const QUERY       = 'query';
+    const MULTIPART   = 'multipart';
+    const NAME        = 'name';
+    const CONTENTS    = 'contents';
+    const FILENAME    = 'filename';
+    const NEXT        = '/';
 
     /** @var array Default params for the query */
     protected $params = array();
@@ -32,44 +46,46 @@ abstract class Base implements LoggerAwareInterface
     /** @var Config */
     protected $config;
 
-
-    public function __construct(Config $config)
+    public function __construct(Config $config, $http = null)
     {
         $this->config = $config;
 
         foreach ($config->getConfigurators() as $configurator) {
             $configurator($this);
         }
+
+        $this->http = $http;
     }
 
     /* Setter & getters */
 
-    public function getMethodName($function_name)
+    public static function toEndPoint($name)
     {
-        $method = str_replace('_', '/', $function_name);
-        $method = str_replace('_', '-', self::camelCaseToUnderscore($method));
+        $method = str_replace('_', self::NEXT, $name);
+        $method = str_replace('_', '-',
+            self::camelCaseToUnderscore($method));
 
         return $method;
     }
 
     public function setOnline($value)
     {
-        return $this->setParam('online', (int) $value);
+        return $this->setParam(self::ONLINE, (int)$value);
     }
 
     public function getOnline()
     {
-        return $this->getParam('online');
+        return $this->getParam(self::ONLINE);
     }
 
     public function setJsonType($value)
     {
-        return $this->setParam('json_type', $value);
+        return $this->setParam(self::JSON_TYPE, $value);
     }
 
     public function getJsonType($default = null)
     {
-        return $this->getParam('json_type', $default);
+        return $this->getParam(self::JSON_TYPE, $default);
     }
 
     public function setParam($key, $value)
@@ -86,7 +102,8 @@ abstract class Base implements LoggerAwareInterface
 
     public function getParams()
     {
-        return array_filter((array) $this->params, function ($i) { return $i !== null; });
+        return array_filter((array) $this->params,
+            static function ($i) { return $i !== null; });
     }
 
     public function addParams($values)
@@ -107,19 +124,20 @@ abstract class Base implements LoggerAwareInterface
      * @return string
      * @throws ConfigException
      */
-    public function getBaseUrl()
+    public function getBaseUrl(): string
     {
-        if (!$namespace = $this->config->getNamespace()) {
-            throw new ConfigException('Unset api namespace');
+        $auth = $this->getConfig()->getAuth();
+        if (!$auth) {
+            throw new ConfigException(
+                'API authentication type is undefined');
         }
 
-        $base_url = $this->getConfig()->getBaseUrl();
-        $base_url = trim($base_url, '/') . '/' . trim($namespace, '/') . '/';
+        $baseUrl = $this->getConfig()->getBaseUrl() . $auth;
 
-        return $base_url;
+        return $baseUrl;
     }
 
-    public function getConfig()
+    public function getConfig(): Config
     {
         return $this->config;
     }
@@ -127,7 +145,7 @@ abstract class Base implements LoggerAwareInterface
     /**
      * @return Http
      */
-    public function getHttpClient()
+    public function getHttpClient(): Http
     {
         if (!$this->http) {
             $this->http = new Http([
@@ -149,9 +167,11 @@ abstract class Base implements LoggerAwareInterface
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-system.login
      */
-    public function system_login($login, $token)
+    public function system_login($login, $token): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['login' => $login, 'token' => $token]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['login' => $login,
+                                             'token' => $token]);
     }
 
     /* Словарь */
@@ -167,60 +187,64 @@ abstract class Base implements LoggerAwareInterface
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-dictionary.dict
      */
-    public function dictionary_dict($names_only = false, $include = [], $exclude = [])
+    public function dictionary_dict($names_only = false, $include = [],
+                                    $exclude = []): array
     {
         $params['names-only'] = $names_only;
         $include and $params['include'] = $include;
         $exclude and $params['exclude'] = $exclude;
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
      * Базовый метод запроса
      *
-     * @param string $method HTTP-метод
-     * @param string $path   URI-Путь
-     * @param array  $params Query-Параметры
-     * @param array  $data   Данные запроса
-     * @param array  $files  Загрузить файлы (будет использован POST)
+     * @param string $method   HTTP-метод
+     * @param string $path     URI-Путь
+     * @param array  $params   Query-Параметры
+     * @param array  $data     Данные запроса
+     * @param array  $files    Загрузить файлы (будет использован POST)
      * @param bool   $postdata Передавать данные через POST (по-умолчанию данные передаются в виде JSON)
      *
      * @return array
      * @throws Exception
      */
-    protected function request($method, $path, array $params = [], array $data = [], array $files = [], $postdata = false)
+    protected function request($method, $path, array $params = [],
+                               array $data = [], array $files = [],
+                               $postdata = false): array
     {
         $params = array_merge($this->getParams(), $params);
 
         $options = [];
 
-        $uri   = $this->getBaseUrl() . '/' . trim($path, '/') . '/';
+        $uri   = $this->getBaseUrl() . self::NEXT . $path;
         $label = '';
         if ($this->logger) {
             $label = md5(json_encode([$method, $uri, $options]));
         }
 
         if ($params) {
-            $options['query'] = $params;
+            $options[self::QUERY] = $params;
         }
 
         try {
             if ($files) {
-                $options['multipart'] = [];
+                $options[self::MULTIPART] = [];
                 foreach ($files as $key => $filename) {
                     if (!is_array($filename)) {
-                        $options['multipart'][] = [
-                            'name'     => $key,
-                            'contents' => $this->getFileStream($filename),
-                            'filename' => $filename,
+                        $options[self::MULTIPART][] = [
+                            self::NAME     => $key,
+                            self::CONTENTS => $this->getFileStream($filename),
+                            self::FILENAME => $filename,
                         ];
                     } else {
                         foreach ($filename as $f) {
-                            $options['multipart'][] = [
-                                'name'     => $key,
-                                'contents' => $this->getFileStream($f),
-                                'filename' => $filename,
+                            $options[self::MULTIPART][] = [
+                                self::NAME     => $key,
+                                self::CONTENTS => $this->getFileStream($f),
+                                self::FILENAME => $filename,
                             ];
                         }
                     }
@@ -228,9 +252,9 @@ abstract class Base implements LoggerAwareInterface
 
                 if ($data) {
                     foreach ($data as $key => $value) {
-                        $options['multipart'][] = [
-                            'name'     => $key,
-                            'contents' => $value,
+                        $options[self::MULTIPART][] = [
+                            self::NAME     => $key,
+                            self::CONTENTS => $value,
                         ];
                     }
                 }
@@ -242,13 +266,22 @@ abstract class Base implements LoggerAwareInterface
                 }
             }
 
+            $isExists = array_key_exists(self::QUERY, $options);
+            $query    = '';
+            if ($isExists) {
+                $query = $options[self::QUERY];
+            }
             if ($this->logger) {
-                $url = $uri . ($options['query'] ? '?' . http_build_query($options['query']) : '');
-                $this->logger->info(sprintf('request[%s]: %s %s', $label, $method, $url));
+
+                $url = $uri . ($query ? '?'
+                        . http_build_query($query) : '');
+                $this->logger->info(sprintf('request[%s]: %s %s',
+                    $label, $method, $url));
             }
 
             /** @var ResponseInterface $response */
-            $response = $this->getHttpClient()->request($method, $uri, $options);
+            $response = $this->getHttpClient()->request($method, $uri,
+                $options);
         } catch (GuzzleException $e) {
             $request = null;
             if ($e instanceof GuzzleRequestException) {
@@ -256,24 +289,29 @@ abstract class Base implements LoggerAwareInterface
             }
 
             if ($this->logger) {
-                $this->logger->error(sprintf('error[%s]: %s %s', $label, $e->getCode(), $e->getMessage()));
+                $this->logger->error(sprintf('error[%s]: %s %s',
+                    $label, $e->getCode(), $e->getMessage()));
             }
 
-            throw new RequestException($request, 'Cannot perform request', $e->getCode(), $e);
+            throw new RequestException($request,
+                'Cannot perform request', $e->getCode(), $e);
         }
 
         $statusCode = $response->getStatusCode();
         $body       = $response->getBody();
 
         if ($this->logger) {
-            $this->logger->info(sprintf('response[%s]: %s %s', $label, $statusCode, $body));
+            $this->logger->info(sprintf('response[%s]: %s %s',
+                $label, $statusCode, $body));
         }
 
         $json   = @json_decode($body, true);
         $status = @$json['status'];
 
-        if (!isset($status['is_success'])) {
-            $body_sample = sprintf('Body: [%s]', substr($body, 0, $this->config->getErrorBodyLength()));
+        if (!isset($status[self::IS_SUCCESS])) {
+            $body_sample = sprintf('Body: [%s]',
+                substr($body, 0, $this->getConfig()
+                                      ->getErrorBodyLength()));
 
             if ($statusCode < 400) {
                 $message = 'Decode error. ' . $body_sample;
@@ -286,22 +324,26 @@ abstract class Base implements LoggerAwareInterface
             throw new ResponseException($message, $code);
         }
 
-        if (!$status['is_success']) {
-            if (isset($status['message'])) {
-                $messages[] = $status['message'];
+        if (!$status[self::IS_SUCCESS]) {
+            if (isset($status[self::MESSAGE])) {
+                $messages[] = $status[self::MESSAGE];
             }
 
-            if (isset($status['form_errors'])) {
-                $messages[] = '' . json_encode($status['form_errors'], JSON_UNESCAPED_UNICODE);
+            if (isset($status[self::FORM_ERRORS])) {
+                $messages[] = '' . json_encode($status[self::FORM_ERRORS],
+                        JSON_UNESCAPED_UNICODE);
             }
 
             if (empty($messages)) {
-                $body_sample = sprintf('Body: [%s]', substr($body, 0, $this->config->getErrorBodyLength()));
+                $body_sample = sprintf('Body: [%s]',
+                    substr($body, 0, $this->getConfig()
+                                          ->getErrorBodyLength()));
 
                 $messages[] = 'Unknown error. ' . $body_sample;
             }
 
-            throw new AppException(implode('|', $messages), $statusCode);
+            throw new AppException(implode('|', $messages),
+                $statusCode);
         }
 
         return $json['data'];
@@ -313,10 +355,11 @@ abstract class Base implements LoggerAwareInterface
      * @return LazyOpenStream
      * @throws RequestException
      */
-    protected function getFileStream($filename)
+    protected function getFileStream($filename): LazyOpenStream
     {
         if (!$filename) {
-            throw new RequestException(null, sprintf('File not exists [%s]', $filename));
+            throw new RequestException(null,
+                sprintf('File not exists [%s]', $filename));
         }
 
         return new LazyOpenStream($filename, 'rb');
