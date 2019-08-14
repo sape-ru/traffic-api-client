@@ -8,26 +8,29 @@ use GuzzleHttp\Cookie\SetCookie;
 
 class Http extends Client
 {
+    const BASE_URI = 'base_uri';
+    const COOKIES  = 'cookies';
+
     /**
      * @return string|null
      */
     public function getBaseUri()
     {
-        return $this->getConfig('base_uri');
+        return $this->getConfig(self::BASE_URI);
     }
 
     /**
      * @return CookieJar
      */
-    public function getCookieJar()
+    public function getCookieJar(): CookieJar
     {
-        return $this->getConfig('cookies');
+        return $this->getConfig(self::COOKIES);
     }
 
     public function setCookie($name, $value, $domain = null, $path = null)
     {
         if (!$domain) {
-            $base_uri = $this->getConfig('base_uri');
+            $base_uri = $this->getBaseUri();
             $domain   = $base_uri->getHost();
         }
 

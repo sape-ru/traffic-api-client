@@ -2,10 +2,15 @@
 
 namespace SapeRt\Api\Tests;
 
+use SapeRt\Api\Exception\Exception;
+
 include_once __DIR__ . '/bootstrap.php';
 
 class SystemTest extends TestBase
 {
+    /**
+     * @throws Exception
+     */
     public function testDictionary()
     {
         $data = $this->client->dictionary_dict(true);
@@ -18,12 +23,13 @@ class SystemTest extends TestBase
 
     /**
      * @expectedException \SapeRt\Api\Exception\HttpException
+     * @throws Exception
      */
     public function testLogin()
     {
         $login = 'badLogin';
         $token = 'badToken';
 
-        $res = $this->client->system_login($login, $token);
+        $this->client->system_login($login, $token);
     }
 }

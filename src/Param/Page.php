@@ -4,6 +4,8 @@ namespace SapeRt\Api\Param;
 
 class Page
 {
+    const PAGE_NUM  = 'page_num';
+    const PAGE_SIZE = 'page_size';
     protected $page_num;
     protected $page_size;
     protected $order_by;
@@ -15,11 +17,11 @@ class Page
         $this->order_by  = $order_by;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return array(
-            'page_num'  => $this->page_num,
-            'page_size' => $this->page_size,
+            self::PAGE_NUM  => $this->page_num,
+            self::PAGE_SIZE => $this->page_size,
         );
     }
 
@@ -36,7 +38,7 @@ class Page
      *
      * @return $this
      */
-    public function setOrderBy($order_by)
+    public function setOrderBy($order_by): self
     {
         $this->order_by = $order_by;
 
