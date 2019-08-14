@@ -2,106 +2,105 @@
 
 namespace SapeRt\Api;
 
-use SapeRt\Api\Exception\ConfigException;
 
-class Config implements \ArrayAccess
+use SapeRt\Api\Client\Base;
+
+class Config
 {
+    const HOST = 'https://traffic.sape.ru';
+
+    const XDEBUG_CONFIG  = 'XDEBUG_CONFIG';
+    const XDEBUG_SESSION = 'XDEBUG_SESSION';
+    const IDEKEY         = 'idekey';
+
     /** @var int */
-    protected $_error_body_length = 512;
+    protected $errorBodyLength = 4096;
 
     /** @var string */
-    protected $_base_url = 'https://traffic.sape.ru/api';
+    protected $url = '';
 
     /** @var string */
-    protected $_namespace;
+    protected $authType;
 
     /** @var callable[] */
-    protected $_configurators = [];
+    protected $configurators = [];
 
+    /** @var bool */
+    protected $xdebugIdekey = false;
 
-    protected static function underscoreToCamelCase($name)
+    public function getUrl(): string
     {
-        $name = str_replace('_', ' ', $name);
-        $name = ucwords($name);
-        $name = str_replace(' ', '', $name);
-
-        return $name;
+        return $this->url;
     }
 
-
-    public function __construct($namespace)
+    public function __construct(string $auth, string $host = '')
     {
-        $this->_namespace = $namespace;
+        $this->authType = $auth;
+        if ($host === '') {
+            $host = self::HOST;
+        }
+        $this->url = $host;
     }
 
-    public function getNamespace()
+    public function getHost(): string
     {
-        return $this->_namespace;
+        return parse_url($this->getUrl(), PHP_URL_HOST);
     }
 
-    public function getBaseUrl()
+    public function getXdebugIdekey()
     {
-        return $this->_base_url;
+        $config = getenv(self::XDEBUG_CONFIG);
+
+        if (!$config) {
+            return null;
+        }
+
+        $config = array_map('trim', explode(' ', $config));
+        foreach ($config as $cfg) {
+            list($name, $value) = array_map('trim', explode('=', $cfg));
+
+            if ($name === self::IDEKEY) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
-    public function getErrorBodyLength()
+    public function setXdebugSession($idekey = null)
     {
-        return $this->_error_body_length;
-    }
+        if (!$idekey) {
+            $idekey = $this->getXdebugIdekey();
+        }
+        $this->xdebugIdekey = $idekey;
 
-    public function getConfigurators()
-    {
-        return $this->_configurators;
-    }
-
-    public function addConfigurator($configurator)
-    {
-        $this->_configurators[] = $configurator;
+        $this->addConfigurator(function (Base $client) {
+            $client->getHttpClient()->setCookie(self::XDEBUG_SESSION,
+                $this->xdebugIdekey, $this->getHost());
+        });
 
         return $this;
     }
 
-    /**
-     * @param $fieldName
-     *
-     * @return mixed
-     * @throws ConfigException
-     */
-    public function get($fieldName)
+    public function getAuthType(): string
     {
-        $accessor = 'get' . self::underscoreToCamelCase($fieldName);
-        if (is_callable([$this, $accessor])) {
-            return $this->$accessor();
-        }
-
-        throw new ConfigException(sprintf('No getter [%s]', $fieldName));
+        return $this->authType;
     }
 
-    // ArrayAccess
-
-    public function offsetExists($offset)
+    public function getErrorBodyLength(): int
     {
-        $accessor = 'get' . self::underscoreToCamelCase($offset);
-
-        return is_callable([$this, $accessor]);
+        return $this->errorBodyLength;
     }
 
-    /**
-     * @param mixed $offset
-     *
-     * @return mixed
-     * @throws ConfigException
-     */
-    public function offsetGet($offset)
+    public function getConfigurators(): array
     {
-        return $this->get($offset);
+        return $this->configurators;
     }
 
-    public function offsetSet($offset, $value)
+    public function addConfigurator($configurator)
     {
-    }
+        $this->configurators[] = $configurator;
 
-    public function offsetUnset($offset)
-    {
+        return $this;
     }
 }

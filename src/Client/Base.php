@@ -2,26 +2,43 @@
 
 namespace SapeRt\Api\Client;
 
-use GuzzleHttp\Psr7\LazyOpenStream;
-use Psr\Http\Message\ResponseInterface;
-
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException as GuzzleRequestException;
-
+use GuzzleHttp\Psr7\LazyOpenStream;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Psr\Log\LoggerInterface;
 use SapeRt\Api\Config;
-use SapeRt\Api\Http;
-
-use SapeRt\Api\Exception\Exception;
 use SapeRt\Api\Exception\AppException;
-use SapeRt\Api\Exception\ConfigException;
+use SapeRt\Api\Exception\Exception;
 use SapeRt\Api\Exception\RequestException;
 use SapeRt\Api\Exception\ResponseException;
+use SapeRt\Api\Http;
 
 abstract class Base implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
+
+    const GET    = 'GET';
+    const POST   = 'POST';
+    const PUT    = 'PUT';
+    const DELETE = 'DELETE';
+
+    const ONLINE      = 'online';
+    const JSON_TYPE   = 'json_type';
+    const FORM_ERRORS = 'form_errors';
+    const MESSAGE     = 'message';
+    const IS_SUCCESS  = 'is_success';
+    const QUERY       = 'query';
+    const MULTIPART   = 'multipart';
+    const NAME        = 'name';
+    const CONTENTS    = 'contents';
+    const FILENAME    = 'filename';
+    const NEXT        = '/';
+    const STATUS      = 'status';
+    const DATA        = 'data';
 
     /** @var array Default params for the query */
     protected $params = array();
@@ -32,44 +49,46 @@ abstract class Base implements LoggerAwareInterface
     /** @var Config */
     protected $config;
 
-
-    public function __construct(Config $config)
+    public function __construct(Config $config, $http = null)
     {
         $this->config = $config;
 
         foreach ($config->getConfigurators() as $configurator) {
             $configurator($this);
         }
+
+        $this->http = $http;
     }
 
     /* Setter & getters */
 
-    public function getMethodName($function_name)
+    public static function toEndPoint($name)
     {
-        $method = str_replace('_', '/', $function_name);
-        $method = str_replace('_', '-', self::camelCaseToUnderscore($method));
+        $method = str_replace('_', self::NEXT, $name);
+        $method = str_replace('_', '-',
+            self::camelCaseToSnakeCase($method));
 
         return $method;
     }
 
     public function setOnline($value)
     {
-        return $this->setParam('online', (int) $value);
+        return $this->setParam(self::ONLINE, (int)$value);
     }
 
     public function getOnline()
     {
-        return $this->getParam('online');
+        return $this->getParam(self::ONLINE);
     }
 
     public function setJsonType($value)
     {
-        return $this->setParam('json_type', $value);
+        return $this->setParam(self::JSON_TYPE, $value);
     }
 
     public function getJsonType($default = null)
     {
-        return $this->getParam('json_type', $default);
+        return $this->getParam(self::JSON_TYPE, $default);
     }
 
     public function setParam($key, $value)
@@ -86,7 +105,8 @@ abstract class Base implements LoggerAwareInterface
 
     public function getParams()
     {
-        return array_filter((array) $this->params, function ($i) { return $i !== null; });
+        return array_filter((array) $this->params,
+            static function ($i) { return $i !== null; });
     }
 
     public function addParams($values)
@@ -105,21 +125,16 @@ abstract class Base implements LoggerAwareInterface
 
     /**
      * @return string
-     * @throws ConfigException
      */
-    public function getBaseUrl()
+    public function getBaseUrl(): string
     {
-        if (!$namespace = $this->config->getNamespace()) {
-            throw new ConfigException('Unset api namespace');
-        }
+        $config  = $this->getConfig();
+        $baseUrl = $config->getUrl() . $config->getAuthType();
 
-        $base_url = $this->getConfig()->getBaseUrl();
-        $base_url = trim($base_url, '/') . '/' . trim($namespace, '/') . '/';
-
-        return $base_url;
+        return $baseUrl;
     }
 
-    public function getConfig()
+    public function getConfig(): Config
     {
         return $this->config;
     }
@@ -127,7 +142,7 @@ abstract class Base implements LoggerAwareInterface
     /**
      * @return Http
      */
-    public function getHttpClient()
+    public function getHttpClient(): Http
     {
         if (!$this->http) {
             $this->http = new Http([
@@ -149,9 +164,11 @@ abstract class Base implements LoggerAwareInterface
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-system.login
      */
-    public function system_login($login, $token)
+    public function system_login($login, $token): array
     {
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), ['login' => $login, 'token' => $token]);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), ['login' => $login,
+                                             'token' => $token]);
     }
 
     /* Словарь */
@@ -167,144 +184,70 @@ abstract class Base implements LoggerAwareInterface
      * @throws Exception
      * @link https://traffic.sape.ru/doc/api#action-dictionary.dict
      */
-    public function dictionary_dict($names_only = false, $include = [], $exclude = [])
+    public function dictionary_dict($names_only = false, $include = [],
+                                    $exclude = []): array
     {
         $params['names-only'] = $names_only;
         $include and $params['include'] = $include;
         $exclude and $params['exclude'] = $exclude;
 
-        return $this->request('GET', str_replace('_', '/', __FUNCTION__), $params);
+        return $this->request(self::GET,
+            self::toEndPoint(__FUNCTION__), $params);
     }
 
     /**
      * Базовый метод запроса
      *
-     * @param string $method HTTP-метод
-     * @param string $path   URI-Путь
-     * @param array  $params Query-Параметры
-     * @param array  $data   Данные запроса
-     * @param array  $files  Загрузить файлы (будет использован POST)
-     * @param bool   $postdata Передавать данные через POST (по-умолчанию данные передаются в виде JSON)
+     * @param string $method         HTTP-метод
+     * @param string $path           URI
+     * @param array  $params         Параметры в строке адреса (Query)
+     * @param array  $data           Данные запроса (Body)
+     * @param array  $files          Загрузить файлы
+     *                               (будет использован POST)
+     * @param bool   $sendDataAsJson Передавать данные как JSON
+     *                               (иначе данные передаются как параметры формы)
      *
      * @return array
      * @throws Exception
      */
-    protected function request($method, $path, array $params = [], array $data = [], array $files = [], $postdata = false)
+    protected function request($method, $path, array $params = [],
+                               array $data = [], array $files = [],
+                               $sendDataAsJson = true): array
     {
-        $params = array_merge($this->getParams(), $params);
-
         $options = [];
+        $params  = array_merge($this->getParams(), $params);
+        if ($params) {
+            $options[self::QUERY] = $params;
+        }
 
-        $uri   = $this->getBaseUrl() . '/' . trim($path, '/') . '/';
-        $label = '';
-        if ($this->logger) {
+        $uri       = $this->getBaseUrl() . self::NEXT . $path;
+        $label     = '';
+        $hasLogger = !empty($this->logger);
+        if ($hasLogger) {
             $label = md5(json_encode([$method, $uri, $options]));
         }
 
-        if ($params) {
-            $options['query'] = $params;
-        }
-
+        $response = null;
         try {
-            if ($files) {
-                $options['multipart'] = [];
-                foreach ($files as $key => $filename) {
-                    if (!is_array($filename)) {
-                        $options['multipart'][] = [
-                            'name'     => $key,
-                            'contents' => $this->getFileStream($filename),
-                            'filename' => $filename,
-                        ];
-                    } else {
-                        foreach ($filename as $f) {
-                            $options['multipart'][] = [
-                                'name'     => $key,
-                                'contents' => $this->getFileStream($f),
-                                'filename' => $filename,
-                            ];
-                        }
-                    }
-                }
-
-                if ($data) {
-                    foreach ($data as $key => $value) {
-                        $options['multipart'][] = [
-                            'name'     => $key,
-                            'contents' => $value,
-                        ];
-                    }
-                }
-            } else if ($data) {
-                if ($postdata) {
-                    $options['form_params'] = $data;
-                } else {
-                    $options['json'] = $data;
-                }
-            }
-
-            if ($this->logger) {
-                $url = $uri . ($options['query'] ? '?' . http_build_query($options['query']) : '');
-                $this->logger->info(sprintf('request[%s]: %s %s', $label, $method, $url));
-            }
-
-            /** @var ResponseInterface $response */
-            $response = $this->getHttpClient()->request($method, $uri, $options);
+            $response = $this->performRequest($method, $data, $files,
+                $sendDataAsJson, $options, $uri, $label);
         } catch (GuzzleException $e) {
-            $request = null;
-            if ($e instanceof GuzzleRequestException) {
-                $request = $e->getRequest();
-            }
-
-            if ($this->logger) {
-                $this->logger->error(sprintf('error[%s]: %s %s', $label, $e->getCode(), $e->getMessage()));
-            }
-
-            throw new RequestException($request, 'Cannot perform request', $e->getCode(), $e);
+            $this->processRequestFail($e, $label);
         }
 
         $statusCode = $response->getStatusCode();
         $body       = $response->getBody();
-
-        if ($this->logger) {
-            $this->logger->info(sprintf('response[%s]: %s %s', $label, $statusCode, $body));
+        if ($hasLogger) {
+            $this->logger->info(sprintf('response[%s]: %s %s',
+                $label, $statusCode, $body));
         }
 
-        $json   = @json_decode($body, true);
-        $status = @$json['status'];
+        $asJson = @json_decode($body, true);
+        $status = @$asJson[self::STATUS];
+        $this->processResponseFail($status, $body, $statusCode);
+        $this->processApplicationFail($status, $body, $statusCode);
 
-        if (!isset($status['is_success'])) {
-            $body_sample = sprintf('Body: [%s]', substr($body, 0, $this->config->getErrorBodyLength()));
-
-            if ($statusCode < 400) {
-                $message = 'Decode error. ' . $body_sample;
-                $code    = $statusCode;
-            } else {
-                $message = 'Response error. ' . $body_sample;
-                $code    = 555;
-            }
-
-            throw new ResponseException($message, $code);
-        }
-
-        if (!$status['is_success']) {
-            if (isset($status['message'])) {
-                $messages[] = $status['message'];
-            }
-
-            if (isset($status['form_errors'])) {
-                $messages[] = '' . json_encode($status['form_errors'], JSON_UNESCAPED_UNICODE);
-            }
-
-            if (empty($messages)) {
-                $body_sample = sprintf('Body: [%s]', substr($body, 0, $this->config->getErrorBodyLength()));
-
-                $messages[] = 'Unknown error. ' . $body_sample;
-            }
-
-            throw new AppException(implode('|', $messages), $statusCode);
-        }
-
-        return $json['data'];
+        return $asJson[self::DATA];
     }
 
     /**
@@ -313,19 +256,236 @@ abstract class Base implements LoggerAwareInterface
      * @return LazyOpenStream
      * @throws RequestException
      */
-    protected function getFileStream($filename)
+    protected function getFileStream($filename): LazyOpenStream
     {
         if (!$filename) {
-            throw new RequestException(null, sprintf('File not exists [%s]', $filename));
+            throw new RequestException(null,
+                sprintf('File not exists [%s]', $filename));
         }
 
         return new LazyOpenStream($filename, 'rb');
     }
 
-    protected static function camelCaseToUnderscore($name)
+    protected static function camelCaseToSnakeCase($name)
     {
         $name = ltrim(preg_replace('/[A-Z]/', '_$0', $name), '_');
 
         return strtolower($name);
+    }
+
+    /**
+     * @param array $data
+     * @param array $files
+     * @param array $options
+     *
+     * @return Base
+     * @throws RequestException
+     */
+    protected function processFiles(array $data, array $files,
+                                    array &$options): self
+    {
+        $options[self::MULTIPART] = [];
+        foreach ($files as $key => $filename) {
+            $hasManyFiles = is_array($filename);
+            if ($hasManyFiles) {
+                foreach ($filename as $f) {
+                    $options[self::MULTIPART][] = [
+                        self::NAME     => $key,
+                        self::CONTENTS => $this->getFileStream($f),
+                        self::FILENAME => $filename,
+                    ];
+                }
+            }
+            if (!$hasManyFiles) {
+                $options[self::MULTIPART][] = [
+                    self::NAME     => $key,
+                    self::CONTENTS => $this->getFileStream($filename),
+                    self::FILENAME => $filename,
+                ];
+            }
+        }
+
+        if ($data) {
+            foreach ($data as $key => $value) {
+                $options[self::MULTIPART][] = [
+                    self::NAME     => $key,
+                    self::CONTENTS => $value,
+                ];
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param                                   $status
+     * @param StreamInterface                   $body
+     * @param int                               $statusCode
+     *
+     * @return Base
+     * @throws ResponseException
+     */
+    protected function processResponseFail(
+        $status, StreamInterface $body,
+        int $statusCode): self
+    {
+        $bodySample = '';
+        $isSuccess  = isset($status[self::IS_SUCCESS]);
+        if (!$isSuccess) {
+            $bodySample = sprintf('Body: [%s]',
+                substr($body, 0, $this->getConfig()
+                                      ->getErrorBodyLength()));
+        }
+        $message       = '';
+        $code          = 0;
+        $isDecodeError = $statusCode < 400;
+        if (!$isSuccess && $isDecodeError) {
+            $message = 'Decode error. ' . $bodySample;
+            $code    = $statusCode;
+        }
+        if (!$isSuccess && !$isDecodeError) {
+            $message = 'Response error. ' . $bodySample;
+            $code    = 555;
+        }
+        if (!$isSuccess) {
+            throw new ResponseException($message, $code);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param                                   $status
+     * @param StreamInterface                   $body
+     * @param int                               $statusCode
+     *
+     * @return Base
+     * @throws AppException
+     */
+    protected function processApplicationFail(
+        $status, StreamInterface $body,
+        int $statusCode): self
+    {
+        $isFail     = !$status[self::IS_SUCCESS];
+        $hasMessage = isset($status[self::MESSAGE]);
+        $messages   = [];
+        if ($isFail && $hasMessage) {
+            $messages[] = $status[self::MESSAGE];
+        }
+
+        $hasFormError = isset($status[self::FORM_ERRORS]);
+        if ($isFail && $hasFormError) {
+            $messages[] = '' . json_encode($status[self::FORM_ERRORS],
+                    JSON_UNESCAPED_UNICODE);
+        }
+
+        if ($isFail && empty($messages)) {
+            $messages[] = 'Unknown error. '
+                . sprintf('Body: [%s]', $body);
+        }
+        if ($isFail) {
+            throw new AppException(implode('|', $messages),
+                $statusCode);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param GuzzleException $e
+     * @param string          $label
+     *
+     * @throws RequestException
+     */
+    protected function processRequestFail(GuzzleException $e,
+                                          string $label)
+    {
+        $request = null;
+        if ($e instanceof GuzzleRequestException) {
+            $request = $e->getRequest();
+        }
+        if (!empty($this->logger)) {
+            $this->logger->error(sprintf('error[%s]: %s %s',
+                $label, $e->getCode(), $e->getMessage()));
+        }
+
+        throw new RequestException($request,
+            'Cannot perform request', $e->getCode(), $e);
+    }
+
+    /**
+     * @param        $method
+     * @param array  $data
+     * @param array  $files
+     * @param        $sendDataAsJson
+     * @param array  $options
+     * @param string $uri
+     * @param string $label
+     *
+     * @return ResponseInterface
+     * @throws GuzzleException
+     * @throws RequestException
+     */
+    protected function performRequest(
+        $method, array $data, array $files, $sendDataAsJson,
+        array $options, string $uri, string $label): ResponseInterface
+    {
+        if ($files) {
+            $this->processFiles($data, $files, $options);
+        }
+        if (!$files && $data) {
+            $options = self::processData($data, $sendDataAsJson, $options);
+        }
+
+        if ($this->logger) {
+            self::logRequest($method, $options, $uri, $label, $this->logger);
+        }
+
+        /** @var ResponseInterface $response */
+        $response = $this->getHttpClient()->request($method, $uri,
+            $options);
+
+        return $response;
+    }
+
+    /**
+     * @param array $data
+     * @param       $sendDataAsJson
+     * @param array $options
+     *
+     * @return array
+     */
+    protected static function processData(array $data, $sendDataAsJson,
+                                          array &$options): array
+    {
+        if ($sendDataAsJson) {
+            $options['json'] = $data;
+        }
+        if (!$sendDataAsJson) {
+            $options['form_params'] = $data;
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param                 $method
+     * @param array           $options
+     * @param string          $uri
+     * @param string          $label
+     * @param LoggerInterface $logger
+     */
+    protected static function logRequest($method, array $options, string $uri,
+                                         string $label, LoggerInterface $logger)
+    {
+        $hasQuery = array_key_exists(self::QUERY, $options);
+        $url      = $uri;
+        if ($hasQuery) {
+            $query = $options[self::QUERY];
+            $url   = $uri . '?' . http_build_query($query);
+        }
+
+        $logger->info(sprintf('request[%s]: %s %s',
+            $label, $method, $url));
     }
 }
