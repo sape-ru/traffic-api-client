@@ -1408,7 +1408,7 @@ class User extends Base
 
         return $this->request(self::POST,
             self::toEndPoint(__FUNCTION__), ['id' => $id],
-            $data, $files, true);
+            $data, $files, false);
     }
 
     /* Клиенты */
